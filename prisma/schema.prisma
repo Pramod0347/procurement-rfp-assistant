@@ -20,3 +20,16 @@ model Vendor {
   notes        String?
   createdAt    DateTime @default(now())
 }
+
+model Rfp {
+  id                     String   @id @default(cuid())
+  title                  String
+  naturalLanguageInput   String   // original text you type
+  structuredSpec         Json     // AI-generated structured RFP (later)
+  budget                 Float?
+  currency               String?
+  deliveryDeadline       DateTime?
+  paymentTerms           String?
+  minimumWarrantyMonths  Int?
+  createdAt              DateTime @default(now())
+}
