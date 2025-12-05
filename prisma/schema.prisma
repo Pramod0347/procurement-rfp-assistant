@@ -44,17 +44,46 @@ model Proposal {
   id              String   @id @default(cuid())
   rfpId           String
   vendorId        String
-
   totalPrice      Float?
   currency        String?
   deliveryDays    Int?
   warrantyMonths  Int?
   terms           String?
   notes           String?
-
   createdAt       DateTime @default(now())
 
-  // 👇 forward relations
-  rfp    Rfp    @relation(fields: [rfpId], references: [id])
-  vendor Vendor @relation(fields: [vendorId], references: [id])
+  // NEW
+  source          String   @default("MANUAL")
+  emailId         String?  @unique
+  email           EmailMessage? @relation(fields: [emailId], references: [id])
+
+  // relations you already have:
+  rfp             Rfp      @relation(fields: [rfpId], references: [id])
+  vendor          Vendor   @relation(fields: [vendorId], references: [id])
 }
+
+
+model EmailMessage {
+  id         String      @id @default(cuid())
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  from       String
+  to         String?
+  subject    String?
+  bodyText   String?
+  bodyHtml   String?
+  messageId  String?     @unique
+  receivedAt DateTime?
+  status     EmailStatus @default(PENDING)
+
+  // One email -> optional one proposal
+  proposal   Proposal?
+}
+
+enum EmailStatus {
+  PENDING
+  PARSED
+  FAILED
+}
+
