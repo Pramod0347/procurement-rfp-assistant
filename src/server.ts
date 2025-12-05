@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import prisma from "./prisma";
 import { generateRfpSpecFromText } from "./ai";
+import { compareProposalsForRfp } from "./proposalScoring";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -144,7 +145,7 @@ app.post("/rfps/from-text", async (req, res) => {
       data: {
         title,
         naturalLanguageInput,
-        structuredSpec,
+        structuredSpec: structuredSpec as any,
         budget: budget ?? null,
         currency: currency ?? null,
         deliveryDeadline,
@@ -167,6 +168,75 @@ app.post("/rfps/from-text", async (req, res) => {
     res.status(500).json({ error: "Failed to create RFP from text" });
   }
 });
+
+app.get("/rfps/:rfpId/proposals", async (req, res) => {
+  try {
+    const { rfpId } = req.params;
+    const proposals = await prisma.proposal.findMany({
+      where: { rfpId },
+      include: { vendor: true },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(proposals);
+  } catch (err) {
+    console.error("Error fetching proposals:", err);
+    res.status(500).json({ error: "Failed to fetch proposals" });
+  }
+})
+
+app.post("/rfps/:rfpId/proposals", async (req, res) => {
+  try {
+    const { rfpId } =  req.params;
+    const { vendorId, totalPrice, currency, deliveryDays, warrantyMonths, terms, notes } = req.body;
+    if (!vendorId) {
+      return res.status(400).json({ error: "vendorId is required" });
+    }
+
+    const proposal = await prisma.proposal.create({
+      data: {
+        rfpId,
+        vendorId,
+        totalPrice: totalPrice ?? null,
+        currency: currency ?? null,
+        deliveryDays: deliveryDays ?? null,
+        warrantyMonths: warrantyMonths ?? null,
+        terms: terms ?? null,
+        notes: notes ?? null,
+      },
+    });
+
+    res.status(201).json(proposal);
+  } catch (err) {
+    console.error("Error fetching proposals:", err);
+    res.status(500).json({ error: "Failed to create proposals" });
+  }
+});
+
+app.get("/rfps/:rfpId/compare", async (req, res) => {
+  try {
+    const { rfpId } = req.params;
+
+    const rfp = await prisma.rfp.findUnique({
+      where: { id: rfpId }
+    });
+
+    if(!rfp) {
+      return res.status(404).json({ error: "RFP not found" });
+    }
+
+    const proposals = await prisma.proposal.findMany({
+      where: { rfpId },
+      include: { vendor: true }, 
+    })
+
+    const result = compareProposalsForRfp(rfp, proposals as any);
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error comparing proposals:", err);
+    res.status(500).json({ error: "Failed to compare proposals" });
+  }
+})
 
 // Start server
 app.listen(PORT, () => {

@@ -13,23 +13,48 @@ datasource db {
 }
 
 model Vendor {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
+  id            String     @id @default(cuid())
+  name          String
+  email         String     @unique
   contactPerson String?
-  notes        String?
-  createdAt    DateTime @default(now())
+  notes         String?
+  createdAt     DateTime   @default(now())
+
+  // 👇 back relation: one vendor -> many proposals
+  proposals     Proposal[]
 }
 
 model Rfp {
-  id                     String   @id @default(cuid())
+  id                     String     @id @default(cuid())
   title                  String
-  naturalLanguageInput   String   // original text you type
-  structuredSpec         Json     // AI-generated structured RFP (later)
+  naturalLanguageInput   String
+  structuredSpec         Json
   budget                 Float?
   currency               String?
   deliveryDeadline       DateTime?
   paymentTerms           String?
   minimumWarrantyMonths  Int?
-  createdAt              DateTime @default(now())
+  createdAt              DateTime   @default(now())
+
+  // 👇 back relation: one RFP -> many proposals
+  proposals              Proposal[]
+}
+
+model Proposal {
+  id              String   @id @default(cuid())
+  rfpId           String
+  vendorId        String
+
+  totalPrice      Float?
+  currency        String?
+  deliveryDays    Int?
+  warrantyMonths  Int?
+  terms           String?
+  notes           String?
+
+  createdAt       DateTime @default(now())
+
+  // 👇 forward relations
+  rfp    Rfp    @relation(fields: [rfpId], references: [id])
+  vendor Vendor @relation(fields: [vendorId], references: [id])
 }
