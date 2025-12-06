@@ -86,4 +86,3 @@ enum EmailStatus {
   PARSED
   FAILED
 }
-

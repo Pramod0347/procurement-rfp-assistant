@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Rfp, Vendor } from ".prisma/client";
+import { Rfp, Vendor } from "@prisma/client";
 
 export interface ParsedProposalSpec {
   totalPrice: number | null;
