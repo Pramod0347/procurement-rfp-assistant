@@ -1,5 +1,5 @@
 // src/proposalScoring.ts
-import { Proposal, Vendor, Rfp } from "@prisma/client";
+import { Proposal, Vendor, Rfp } from ".prisma/client";
 
 export type ProposalWithVendor = Proposal & { vendor: Vendor };
 
